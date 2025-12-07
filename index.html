@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления планами с сохранением данных</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #adb5bd;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+
+        .btn-block {
+            width: 100%;
+            display: block;
+        }
+
+        .plans-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .plan-item {
+            background-color: var(--light-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        .plan-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .plan-item.high-priority {
+            border-left-color: var(--warning-color);
+        }
+
+        .plan-item.medium-priority {
+            border-left-color: #ff9e00;
+        }
+
+        .plan-item.completed {
+            opacity: 0.8;
+            border-left-color: var(--success-color);
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .plan-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--dark-color);
+        }
+
+        .plan-priority {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--warning-color);
+        }
+
+        .priority-medium {
+            background-color: rgba(255, 158, 0, 0.2);
+            color: #cc7a00;
+        }
+
+        .priority-low {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success-color);
+        }
+
+        .plan-author {
+            font-size: 0.9rem;
+            color: var(--gray-color);
+            margin-top: 5px;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .plan-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-completed {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-active {
+            background-color: rgba(67, 97, 238, 0.2);
+            color: var(--primary-color);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+
+        .empty-plans {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-color);
+        }
+
+        .empty-plans i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .users-online {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .plan-dates {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--gray-color);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(67, 97, 238, 0.1);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1><i class="fas fa-database"></i> Планы с сохранением</h1>
+                    <p class="subtitle">Данные сохраняются на сервере и не пропадают</p>
+                </div>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i> Вы: <span id="current-user">Алексей</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-plans">0</div>
+                <div class="stat-label">Всего планов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completed-plans">0</div>
+                <div class="stat-label">Завершено</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="high-priority-plans">0</div>
+                <div class="stat-label">Высокий приоритет</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-column">
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-plus-circle"></i> Добавить новый план</h2>
+                    <form id="plan-form">
+                        <div class="form-group">
+                            <label for="plan-title"><i class="fas fa-heading"></i> Название плана</label>
+                            <input type="text" id="plan-title" placeholder="Например: Завершить проект" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plan-description"><i class="fas fa-align-left"></i> Описание</label>
+                            <textarea id="plan-description" placeholder="Подробное описание плана..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plan-priority"><i class="fas fa-exclamation-circle"></i> Приоритет</label>
+                            <select id="plan-priority">
+                                <option value="low">Низкий</option>
+                                <option value="medium" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plan-deadline"><i class="fas fa-calendar-alt"></i> Срок выполнения</label>
+                            <input type="date" id="plan-deadline" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plan-author"><i class="fas fa-user-edit"></i> Автор</label>
+                            <input type="text" id="plan-author" value="Алексей" required>
+                        </div>
+                        
+                        <input type="hidden" id="plan-id" value="">
+                        
+                        <button type="submit" class="btn btn-block" id="submit-btn">
+                            <i class="fas fa-plus"></i> Добавить план
+                        </button>
+                        
+                        <button type="button" class="btn btn-success btn-block" id="update-btn" style="display: none;">
+                            <i class="fas fa-save"></i> Сохранить изменения
+                        </button>
+                        
+                        <button type="button" class="btn btn-warning btn-block" id="cancel-btn" style="display: none; margin-top: 10px;">
+                            <i class="fas fa-times"></i> Отменить редактирование
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-info-circle"></i> Информация</h2>
+                    <p><i class="fas fa-database"></i> <strong>Данные сохраняются</strong> в базе SQLite на сервере</p>
+                    <p><i class="fas fa-redo"></i> После перезагрузки страницы планы останутся</p>
+                    <p><i class="fas fa-server"></i> Сервер работает на Node.js + Express</p>
+                    <p><i class="fas fa-users"></i> Все пользователи видят одни и те же планы</p>
+                </div>
+            </div>
+            
+            <div class="right-column">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-list"></i> Все планы
+                        <div style="margin-left: auto; font-size: 1rem;">
+                            <span id="plans-count">0</span> планов
+                        </div>
+                    </div>
+                    
+                    <div class="filter-options">
+                        <button class="btn" id="filter-all">Все</button>
+                        <button class="btn" id="filter-active">Активные</button>
+                        <button class="btn" id="filter-completed">Завершенные</button>
+                        <button class="btn" id="filter-high">Высокий приоритет</button>
+                        <button class="btn" id="refresh-btn">
+                            <i class="fas fa-sync-alt"></i> Обновить
+                        </button>
+                    </div>
+                    
+                    <div class="plans-list" id="plans-list">
+                        <div class="empty-plans">
+                            <div class="loading" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+                            <p>Загрузка планов...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="container">
+            <p>Система управления планами &copy; 2023 | Данные сохраняются в базе SQLite</p>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <span id="notification-text">План успешно добавлен!</span>
+    </div>
+
+    <script>
+        // Базовый URL API
+        const API_URL = 'http://localhost:3000/api';
+        
+        // Текущий пользователь
+        const currentUser = "Алексей";
+        document.getElementById('current-user').textContent = currentUser;
+        
+        // Устанавливаем дату по умолчанию (завтра)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('plan-deadline').value = tomorrow.toISOString().split('T')[0];
+        
+        let editingPlanId = null;
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlans();
+            loadStats();
+            setupEventListeners();
+        });
+        
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Форма добавления/редактирования плана
+            document.getElementById('plan-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addOrUpdatePlan();
+            });
+            
+            // Кнопка обновления плана
+            document.getElementById('update-btn').addEventListener('click', addOrUpdatePlan);
+            
+            // Кнопка отмены редактирования
+            document.getElementById('cancel-btn').addEventListener('click', cancelEdit);
+            
+            // Кнопка обновления списка
+            document.getElementById('refresh-btn').addEventListener('click', loadPlans);
+            
+            // Фильтры
+            document.getElementById('filter-all').addEventListener('click', () => filterPlans('all'));
+            document.getElementById('filter-active').addEventListener('click', () => filterPlans('active'));
+            document.getElementById('filter-completed').addEventListener('click', () => filterPlans('completed'));
+            document.getElementById('filter-high').addEventListener('click', () => filterPlans('high'));
+        }
+        
+        // Загрузка планов с сервера
+        async function loadPlans() {
+            try {
+                const response = await fetch(`${API_URL}/plans`);
+                if (!response.ok) throw new Error('Ошибка загрузки планов');
+                
+                const plans = await response.json();
+                updatePlansList(plans);
+                updateStats();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка загрузки планов', 'error');
+                document.getElementById('plans-list').innerHTML = `
+                    <div class="empty-plans">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Ошибка загрузки</h3>
+                        <p>Не удалось загрузить планы с сервера</p>
+                        <button class="btn" onclick="loadPlans()">Повторить</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Загрузка статистики
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                if (!response.ok) throw new Error('Ошибка загрузки статистики');
+                
+                const stats = await response.json();
+                document.getElementById('total-plans').textContent = stats.total || 0;
+                document.getElementById('completed-plans').textContent = stats.completed || 0;
+                document.getElementById('high-priority-plans').textContent = stats.high_priority || 0;
+            } catch (error) {
+                console.error('Ошибка статистики:', error);
+            }
+        }
+        
+        // Обновление статистики
+        function updateStats() {
+            loadStats();
+        }
+        
+        // Добавление или обновление плана
+        async function addOrUpdatePlan() {
+            const title = document.getElementById('plan-title').value;
+            const description = document.getElementById('plan-description').value;
+            const priority = document.getElementById('plan-priority').value;
+            const deadline = document.getElementById('plan-deadline').value;
+            const author = document.getElementById('plan-author').value;
+            
+            if (!title || !deadline || !author) {
+                showNotification('Заполните обязательные поля', 'error');
+                return;
+            }
+            
+            try {
+                if (editingPlanId !== null) {
+                    // Обновление существующего плана
+                    const plan = {
+                        title,
+                        description,
+                        priority,
+                        deadline,
+                        author,
+                        completed: false
+                    };
+                    
+                    const response = await fetch(`${API_URL}/plans/${editingPlanId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(plan)
+                    });
+                    
+                    if (!response.ok) throw new Error('Ошибка обновления плана');
+                    
+                    showNotification('План успешно обновлен!');
+                    editingPlanId = null;
+                } else {
+                    // Добавление нового плана
+                    const newPlan = {
+                        title,
+                        description,
+                        priority,
+                        deadline,
+                        author
+                    };
+                    
+                    const response = await fetch(`${API_URL}/plans`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newPlan)
+                    });
+                    
+                    if (!response.ok) throw new Error('Ошибка добавления плана');
+                    
+                    showNotification('План успешно добавлен!');
+                }
+                
+                // Сбрасываем форму
+                resetForm();
+                
+                // Обновляем список планов и статистику
+                loadPlans();
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка сохранения плана', 'error');
+            }
+        }
+        
+        // Редактирование плана
+        async function editPlan(id) {
+            try {
+                const response = await fetch(`${API_URL}/plans/${id}`);
+                if (!response.ok) throw new Error('Ошибка загрузки плана');
+                
+                const plan = await response.json();
+                
+                // Заполняем форму данными плана
+                document.getElementById('plan-title').value = plan.title;
+                document.getElementById('plan-description').value = plan.description || '';
+                document.getElementById('plan-priority').value = plan.priority;
+                document.getElementById('plan-deadline').value = plan.deadline;
+                document.getElementById('plan-author').value = plan.author;
+                document.getElementById('plan-id').value = plan.id;
+                
+                // Меняем кнопки
+                document.getElementById('submit-btn').style.display = 'none';
+                document.getElementById('update-btn').style.display = 'block';
+                document.getElementById('cancel-btn').style.display = 'block';
+                
+                // Устанавливаем ID редактируемого плана
+                editingPlanId = id;
+                
+                // Прокручиваем к форме
+                document.querySelector('.left-column').scrollIntoView({ behavior: 'smooth' });
+                
+                showNotification('Редактирование плана');
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка загрузки плана', 'error');
+            }
+        }
+        
+        // Удаление плана
+        async function deletePlan(id) {
+            if (!confirm('Вы уверены, что хотите удалить этот план?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/plans/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Ошибка удаления плана');
+                
+                showNotification('План удален');
+                loadPlans();
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка удаления плана', 'error');
+            }
+        }
+        
+        // Переключение статуса выполнения плана
+        async function togglePlanStatus(id) {
+            try {
+                const response = await fetch(`${API_URL}/plans/${id}/toggle`, {
+                    method: 'PATCH'
+                });
+                
+                if (!response.ok) throw new Error('Ошибка обновления статуса');
+                
+                const result = await response.json();
+                const status = result.completed ? 'выполнен' : 'активен';
+                
+                showNotification(`План отмечен как ${status}`);
+                loadPlans();
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка обновления статуса', 'error');
+            }
+        }
+        
+        // Сброс формы
+        function resetForm() {
+            document.getElementById('plan-form').reset();
+            document.getElementById('plan-author').value = currentUser;
+            document.getElementById('plan-id').value = '';
+            
+            // Устанавливаем дату по умолчанию (завтра)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('plan-deadline').value = tomorrow.toISOString().split('T')[0];
+            
+            // Возвращаем кнопки в исходное состояние
+            document.getElementById('submit-btn').style.display = 'block';
+            document.getElementById('update-btn').style.display = 'none';
+            document.getElementById('cancel-btn').style.display = 'none';
+            
+            editingPlanId = null;
+        }
+        
+        // Отмена редактирования
+        function cancelEdit() {
+            resetForm();
+            showNotification('Редактирование отменено');
+        }
+        
+        // Фильтрация планов
+        function filterPlans(filter) {
+            const planItems = document.querySelectorAll('.plan-item');
+            
+            planItems.forEach(item => {
+                let show = true;
+                
+                if (filter === 'active') {
+                    show = !item.classList.contains('completed');
+                } else if (filter === 'completed') {
+                    show = item.classList.contains('completed');
+                } else if (filter === 'high') {
+                    show = item.classList.contains('high-priority');
+                }
+                
+                item.style.display = show ? 'block' : 'none';
+            });
+            
+            // Обновляем активную кнопку фильтра
+            document.querySelectorAll('.filter-options .btn').forEach(btn => {
+                btn.classList.remove('btn-success');
+            });
+            
+            event.target.classList.add('btn-success');
+        }
+        
+        // Обновление списка планов
+        function updatePlansList(plans) {
+            const plansList = document.getElementById('plans-list');
+            const plansCount = document.getElementById('plans-count');
+            
+            if (!plans || plans.length === 0) {
+                plansList.innerHTML = `
+                    <div class="empty-plans">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Планов пока нет</h3>
+                        <p>Добавьте первый план, используя форму слева</p>
+                    </div>
+                `;
+                plansCount.textContent = '0';
+                return;
+            }
+            
+            let plansHTML = '';
+            
+            plans.forEach(plan => {
+                const priorityText = {
+                    'high': 'Высокий',
+                    'medium': 'Средний',
+                    'low': 'Низкий'
+                };
+                
+                const priorityClass = {
+                    'high': 'priority-high',
+                    'medium': 'priority-medium',
+                    'low': 'priority-low'
+                };
+                
+                const formatDate = (dateString) => {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('ru-RU', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                };
+                
+                plansHTML += `
+                    <div class="plan-item ${plan.priority === 'high' ? 'high-priority' : ''} ${plan.completed ? 'completed' : ''}">
+                        <div class="plan-header">
+                            <div class="plan-title">${plan.title}</div>
+                            <div class="plan-priority ${priorityClass[plan.priority]}">
+                                ${priorityText[plan.priority]}
+                            </div>
+                        </div>
+                        
+                        <p>${plan.description || 'Нет описания'}</p>
+                        
+                        <div class="plan-dates">
+                            <div><i class="far fa-calendar"></i> Срок: ${formatDate(plan.deadline)}</div>
+                            <div><i class="far fa-clock"></i> Создан: ${formatDate(plan.created_at)}</div>
+                        </div>
+                        
+                        <div class="plan-author">
+                            <i class="fas fa-user-edit"></i> Автор: ${plan.author}
+                        </div>
+                        
+                        <div class="plan-status ${plan.completed ? 'status-completed' : 'status-active'}">
+                            ${plan.completed ? 'Завершен' : 'Активен'}
+                        </div>
+                        
+                        <div class="plan-actions">
+                            <button class="btn" onclick="togglePlanStatus(${plan.id})">
+                                <i class="fas fa-${plan.completed ? 'undo' : 'check'}
